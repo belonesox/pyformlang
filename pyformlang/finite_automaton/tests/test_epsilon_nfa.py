@@ -7,7 +7,9 @@ import unittest
 import networkx
 
 from pyformlang.finite_automaton import EpsilonNFA, State, Symbol, Epsilon
-from ..regexable import Regexable
+from pyformlang.finite_automaton.regexable import Regexable
+
+#from ..regexable import Regexable
 
 
 class TestEpsilonNFA(unittest.TestCase):
@@ -515,6 +517,87 @@ class TestEpsilonNFA(unittest.TestCase):
         self.assertTrue(enfa_from_nx.accepts([symb_a, symb_a]))
         self.assertFalse(enfa_from_nx.accepts([]))
 
+
+    def test_nfa_without_epsilon_transitions(self):
+        enfa = EpsilonNFA()
+
+        # compact representation for Regex("(a*|b)").to_epsilon_nfa()
+        trans_ = {  
+            'epsilon': [
+                (0, 2),
+                (0, 6),
+                (2, 4),
+                (5, 4),    
+                (5, 3),
+                (3, 1),
+                (2, 3),
+                (7, 1)
+            ],
+            'a': [
+                (4, 5)    
+            ],
+            'b': [
+                (6, 7)    
+            ],
+        }
+
+        for sym, edges_ in trans_.items():
+            for state_s, state_t in edges_:
+                sym_ = Epsilon()
+                if sym != 'epsilon':
+                    sym_ = Symbol(sym)
+                enfa.add_transition( State(str(state_s)), sym_, State(str(state_t)))
+
+        enfa.add_start_state(State("0"))
+        enfa.add_final_state(State("1"))
+
+        # enfa.write_as_dot("enfa_v1.dot")
+        nfa = enfa.nfa_without_epsilon_transitions()
+
+
+        ntrans_ = {  
+            'a': [
+                (0, 1), 
+                (0, 5),
+                (0, 3),
+                (0, 4),
+                (4, 5),
+                (4, 3),
+                (4, 1),
+                (4, 4),
+                (5, 5),
+                (5, 3),
+                (5, 1),
+                (5, 4),
+                (2, 5),
+                (2, 3),
+                (2, 1),
+                (2, 4),
+            ],
+            'b': [
+                (0, 1),
+                (0, 7),
+                (6, 1),
+                (6, 7),
+            ],
+        }
+
+        for sym, edges_ in ntrans_.items():
+            for state_s, state_t in edges_:
+                self.assertIn((State(str(state_s)), Symbol(sym), State(str(state_t))), nfa)
+
+        for s in [0, 1, 2, 3, 5, 7]:
+            assert State(str(s)) in nfa.final_states, "Wrong final states"
+
+
+        # Some commented code for simplifying changes
+        # nfa.write_as_dot("nfa_v1.dot")
+        # import os
+        # os.system('dot -Tpng enfa_v1.dot -o enfa_v1.dot.png')
+        # os.system('dot -Tpng nfa_v1.dot -o nfa_v1.dot.png')
+
+
+
     def test_iter(self):
         enfa = EpsilonNFA()
         state0 = State("0")
@@ -711,3 +794,7 @@ def get_example_non_minimal():
     enfa0.add_transition(state5, symb_b, state3)
     enfa0.add_transition(state6, symb_b, state4)
     return enfa0
+
+
+if __name__ == '__main__':
+    unittest.main()
