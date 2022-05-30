@@ -539,8 +539,12 @@ class FiniteAutomaton:
             for s_to in graph[s_from]:
                 for transition in graph[s_from][s_to].values():
                     if "label" in transition:
+                        label_ = transition["label"]
+                        if label_ == 'ɛ':
+                            label_ = 'epsilon'
+
                         enfa.add_transition(s_from,
-                                            transition["label"],
+                                            label_,
                                             s_to)
         for node in graph.nodes:
             if graph.nodes[node].get("is_start", False):
