@@ -871,8 +871,64 @@ class EpsilonNFA(Regexable, FiniteAutomaton):
                                     Symbol(new_transitions[out_state]),
                                     out_state)
 
+    def nfa_without_epsilon_transitions(self) -> "EpsilonNFA":
+        """Returns an equivalent NFA that doesn't contain epsilon transitions
+
+        Returns
+        ----------
+        nfa : :class:`~pyformlang.finite_automaton.EpsilonNFA`
+            epsilon NFA without epsilon transitions. 
+
+        Examples
+        --------
+
+
+        >>> from pyformlang.regular_expression import Regex
+        >>> regex = Regex("(a*|b)")
+        >>> enfa = regex.to_epsilon_nfa()  
+        >>> nfa = enfa.nfa_without_epsilon_transitions()
+    
+        """
+        nfa_ = self.copy()
+        delta = self._transition_function._transitions  # for simplicity
+
+        new_trans_ = {} 
+
+        for q in self.states:
+            # Ɛ-closure for state «q»
+            eclose4q_ = self.eclose_iterable({q})
+
+            # Extending final states if somestate in Ɛ-closure reached final state
+            if any(fs_ in self.final_states for fs_ in eclose4q_):
+                nfa_.final_states.add(q) 
+
+            for sym in self.symbols:
+                sym_reached = [] # states that reached by «sym»
+                trans4sym_ = [] # transitions for the symbol «sym»
+                
+                for eq_ in eclose4q_:
+                    if eq_ in delta and sym in delta[eq_]:
+                        sym_reached.extend(delta[eq_][sym])
+                
+                # Get the new transitions from the epsilon closure
+                for eq_ in sym_reached:
+                    trans4sym_.extend(self.eclose_iterable({eq_}))
+
+                if trans4sym_:
+                    if q not in new_trans_:
+                        new_trans_[q] = {}
+                    new_trans_[q][sym] = set(trans4sym_)
+
+        if new_trans_:
+            nfa_._transition_function._transitions = new_trans_
+
+        return nfa_
+
+
     def __bool__(self):
         return not self.is_empty()
+
+
 
 
 def get_temp(start_to_end: str, end_to_start: str, end_to_end: str) \
@@ -948,3 +1004,6 @@ def to_single_state(l_states: Iterable[State]) -> State:
 def combine_state_pair(state0, state1):
     """ Combine two states """
     return State(str(state0.value) + "; " + str(state1.value))
+
+
+
