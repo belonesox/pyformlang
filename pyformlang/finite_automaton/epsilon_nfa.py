@@ -929,6 +929,10 @@ nfa, with no epsilon transition
             if any(fs_ in self.final_states for fs_ in eclose4q_):
                 nfa_.final_states.add(q) 
 
+            if q in self.start_states:
+                for state in eclose4q_:
+                    nfa_.add_start_state(state)
+
             for sym in self.symbols:
                 sym_reached = [] # states that reached by «sym»
                 trans4sym_ = [] # transitions for the symbol «sym»
