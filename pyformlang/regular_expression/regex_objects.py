@@ -142,6 +142,16 @@ class Concatenation(Operator):  # pylint: disable=too-few-public-methods
     def __init__(self):
         super().__init__("Concatenation")
 
+    def derivative(self, symbol):
+        '''
+            return LogicalOr(
+                    Concatenation(self._left.derivative(symbol), self._right),
+                    Concatenation(self._left.nu(),
+                        self._right.derivative(symbol)))
+        '''
+        pass
+
+
 
 class Union(Operator):  # pylint: disable=too-few-public-methods
     """ Represents a union
